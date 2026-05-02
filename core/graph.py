@@ -51,6 +51,11 @@ def node_codegen(state: ForgeState) -> ForgeState:
     return run(state)
 
 
+def node_debug(state: ForgeState) -> ForgeState:
+    from agents.debug_agent import run
+    return run(state)
+
+
 def node_security_audit(state: ForgeState) -> ForgeState:
     from agents.security_audit_agent import run_audit
     return run_audit(state)
@@ -156,6 +161,7 @@ def build_graph() -> StateGraph:
     graph.add_node("arch_validation", node_arch_validation)
     graph.add_node("qa",              node_qa)
     graph.add_node("codegen",         node_codegen)
+    graph.add_node("debug",           node_debug)
     graph.add_node("security_audit",  node_security_audit)
     graph.add_node("security_fix",    node_security_fix)
     graph.add_node("docker",          node_docker)
@@ -177,7 +183,8 @@ def build_graph() -> StateGraph:
         {"qa": "qa", "planning": "planning"},
     )
     graph.add_edge("qa", "codegen")
-    graph.add_edge("codegen", "security_audit")
+    graph.add_edge("codegen", "debug")
+    graph.add_edge("debug", "security_audit")
     graph.add_conditional_edges(
         "security_audit",
         route_after_security,

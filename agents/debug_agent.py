@@ -206,3 +206,158 @@ def _clean_code(raw: str) -> str:
             end -= 1
         raw = "\n".join(lines[1:end + 1])
     return raw.strip()
+
+
+# ── Graph-level entrypoint ─────────────────────────────────────────────────────
+
+def run(state: "ForgeState") -> "ForgeState":
+    """
+    Graph node: post-codegen debug pass.
+
+    Scans all test_results for FAIL entries, identifies which generated files
+    caused the failures, and applies run_targeted_fix() to each one.
+    Respects max_debug_retries from config. Updates generated_files and
+    writes fixed files to disk.
+
+    This is separate from the inline retry loop in codegen_agent — that loop
+    fires during initial generation (per-file, up to 3 attempts). This node
+    fires AFTER the full codegen pass when pytest results are available and
+    we can see which files are causing integration-level test failures.
+    """
+    import yaml
+    import time
+    from pathlib import Path
+    from core.validators import run_syntax_check
+    from core.observability import log_agent_metrics
+
+    try:
+        from core.state import ForgeState  # noqa: F401 — used for type annotation only
+    except ImportError:
+        pass
+
+    cfg_path = Path(__file__).parent.parent / "config.yaml"
+    cfg = yaml.safe_load(open(cfg_path))
+    max_retries: int = cfg["pipeline"].get("max_debug_retries", 3)
+
+    test_results    = state.get("test_results", {})
+    generated_files = state.get("generated_files", {})
+    debug_attempts  = state.get("debug_attempts", {})
+    project_dir     = Path("./generated_project")
+
+    t0 = time.time()
+    files_fixed    = 0
+    fixes_attempted = 0
+
+    log_action("DebugAgent", "Starting post-codegen debug pass",
+               f"Scanning {len(test_results)} test result(s)")
+
+    for test_file, result in test_results.items():
+        if result.get("passed"):
+            continue
+
+        # Extract the error message from the test result
+        error_info = result.get("output", "") or result.get("error", "") or "Test failed"
+        if not error_info.strip():
+            continue
+
+        # Find which implementation file corresponds to this test file
+        # Convention: tests/test_foo.py → app/foo.py (or similar)
+        impl_file = _find_impl_file(test_file, generated_files)
+        if not impl_file:
+            log_action("DebugAgent",
+                       f"  Cannot map {test_file} to an impl file — skipping", level="WARN")
+            continue
+
+        current_code = generated_files.get(impl_file, "")
+        if not current_code or "PLACEHOLDER" in current_code[:80]:
+            log_action("DebugAgent",
+                       f"  {impl_file} is a placeholder — skipping", level="WARN")
+            continue
+
+        attempt_key  = f"debug:{impl_file}"
+        prior_attempts = debug_attempts.get(attempt_key, 0)
+
+        if prior_attempts >= max_retries:
+            log_action("DebugAgent",
+                       f"  Max retries ({max_retries}) reached for {impl_file} — skipping",
+                       level="WARN")
+            continue
+
+        log_action("DebugAgent", f"  Fixing {impl_file}",
+                   f"error={error_info[:80]} attempt={prior_attempts + 1}/{max_retries}")
+
+        fixes_attempted += 1
+        fixed_code, usage = run_targeted_fix(
+            code=current_code,
+            error_info=error_info,
+            filepath=impl_file,
+            contract={},         # no contract context at this stage
+            agent_name="DebugAgent",
+        )
+
+        state["api_call_count"] = state.get("api_call_count", 0) + 1
+        state["total_tokens"]   = state.get("total_tokens", 0) + usage.get("total_tokens", 0)
+        debug_attempts[attempt_key] = prior_attempts + 1
+
+        # Only accept the fix if it passes a syntax check
+        if run_syntax_check(fixed_code)["passed"]:
+            generated_files[impl_file] = fixed_code
+            out_path = project_dir / impl_file
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(fixed_code)
+            files_fixed += 1
+            log_action("DebugAgent", f"  ✓ Fixed and written: {impl_file}")
+        else:
+            log_action("DebugAgent",
+                       f"  ✗ Fix introduced syntax error — keeping original: {impl_file}",
+                       level="WARN")
+
+    latency = time.time() - t0
+    metrics = {
+        "latency_s":       round(latency, 3),
+        "fixes_attempted": fixes_attempted,
+        "files_fixed":     files_fixed,
+    }
+    log_agent_metrics("DebugAgent", metrics)
+    log_action("DebugAgent",
+               f"Debug pass complete — {files_fixed}/{fixes_attempted} files fixed")
+
+    state["generated_files"]             = generated_files
+    state["debug_attempts"]              = debug_attempts
+    state["agent_metrics"]["DebugAgent"] = metrics
+    state["phase"]                       = "debug_done"
+    return state
+
+
+def _find_impl_file(test_file: str, generated_files: dict) -> str | None:
+    """
+    Map a test file path to its implementation file.
+
+    Tries several conventions:
+      tests/test_foo.py   → app/foo.py
+      tests/test_foo.py   → app/routers/foo.py
+      tests/test_items.py → app/items.py
+    Returns the first match found in generated_files, or None.
+    """
+    from pathlib import Path
+    stem = Path(test_file).stem  # e.g. "test_items"
+    base = stem.removeprefix("test_").removeprefix("test")  # e.g. "items"
+
+    candidates = [
+        f"app/{base}.py",
+        f"app/routers/{base}.py",
+        f"app/routes/{base}.py",
+        f"app/api/{base}.py",
+        f"app/api/v1/{base}.py",
+        f"{base}.py",
+    ]
+    for c in candidates:
+        if c in generated_files:
+            return c
+
+    # Fallback: fuzzy match — any generated .py whose stem contains base
+    for fp in generated_files:
+        if fp.endswith(".py") and base in Path(fp).stem and "test" not in fp:
+            return fp
+
+    return None
