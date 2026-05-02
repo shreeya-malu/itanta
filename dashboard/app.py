@@ -29,13 +29,13 @@ def set_state(state: dict):
 
 def _confidence_bar(score: int) -> str:
     if score >= 80:
-        color = "#27AE60"
+        color = "#C05621"
         label = "HIGH"
     elif score >= 60:
-        color = "#F2994A"
+        color = "#B7791F"
         label = "MED"
     else:
-        color = "#EB5757"
+        color = "#C53030"
         label = "LOW"
     bar = "█" * (score // 10) + "░" * (10 - score // 10)
     return f'<span style="color:{color};font-weight:bold">[{bar}] {score}% {label}</span>'
@@ -47,18 +47,18 @@ def _render_decisions(audit: list) -> str:
     rows = []
     for d in audit[-8:]:  # Show last 8
         conf = d.get("confidence", 0)
-        color = "#27AE60" if conf >= 80 else ("#F2994A" if conf >= 60 else "#EB5757")
-        alts = "<br>".join(f"• {a}" for a in d.get("alternatives", [])[:3])
+        color = "#C05621" if conf >= 80 else ("#B7791F" if conf >= 60 else "#C53030")
+        alts = "<br>".join(f"&bull; {a}" for a in d.get("alternatives", [])[:3])
         rows.append(f"""
         <tr>
-          <td style="padding:6px;font-weight:bold;color:#1B4F8A">{d.get('agent','')}</td>
+          <td style="padding:6px;font-weight:bold;color:var(--accent-warm)">{d.get('agent','')}</td>
           <td style="padding:6px;color:{color};font-weight:bold">{conf}%</td>
           <td style="padding:6px">{d.get('reasoning','')[:120]}</td>
-          <td style="padding:6px;font-size:0.85em;color:#718096">{alts or '—'}</td>
+          <td style="padding:6px;font-size:0.85em;color:var(--text-muted)">{alts or '&mdash;'}</td>
         </tr>""")
     return f"""
     <table style="width:100%;border-collapse:collapse;font-size:0.9em">
-      <tr style="background:#0D1B2A;color:white">
+      <tr style="background:var(--header-bg);color:var(--header-fg)">
         <th style="padding:6px;text-align:left">Agent</th>
         <th style="padding:6px;text-align:left">Confidence</th>
         <th style="padding:6px;text-align:left">Reasoning</th>
@@ -73,26 +73,27 @@ def _render_tasks(task_plan: list) -> str:
         return "<i>Task plan not yet generated.</i>"
     rows = []
     status_colors = {
-        "done": "#27AE60", "failed": "#EB5757",
-        "in_progress": "#2D9CDB", "pending": "#718096", "skipped": "#F2994A",
+        "done": "#C05621", "failed": "#C53030",
+        "in_progress": "#744210", "pending": "#718096", "skipped": "#B7791F",
     }
-    status_icons = {
-        "done": "✅", "failed": "❌", "in_progress": "⚙️", "pending": "⏳", "skipped": "⏭️",
+    status_labels = {
+        "done": "Done", "failed": "Failed", "in_progress": "In Progress",
+        "pending": "Pending", "skipped": "Skipped",
     }
     for t in task_plan:
         status = t.get("status", "pending")
         color = status_colors.get(status, "#718096")
-        icon = status_icons.get(status, "•")
+        label = status_labels.get(status, status.upper())
         rows.append(f"""
         <tr>
-          <td style="padding:5px;color:#1B4F8A;font-weight:bold">{t.get('id','')}</td>
+          <td style="padding:5px;color:var(--accent-warm);font-weight:bold">{t.get('id','')}</td>
           <td style="padding:5px">{t.get('title','')}</td>
-          <td style="padding:5px;color:{color};font-weight:bold">{icon} {status.upper()}</td>
-          <td style="padding:5px;color:#718096">{t.get('risk_level','').upper()}</td>
+          <td style="padding:5px;color:{color};font-weight:bold">{label}</td>
+          <td style="padding:5px;color:var(--text-muted)">{t.get('risk_level','').upper()}</td>
         </tr>""")
     return f"""
     <table style="width:100%;border-collapse:collapse;font-size:0.9em">
-      <tr style="background:#0D1B2A;color:white">
+      <tr style="background:var(--header-bg);color:var(--header-fg)">
         <th style="padding:6px;text-align:left">ID</th>
         <th style="padding:6px;text-align:left">Task</th>
         <th style="padding:6px;text-align:left">Status</th>
@@ -109,18 +110,18 @@ def _render_tests(test_results: dict) -> str:
     for filepath, result in test_results.items():
         passed = result.get("tests_passed", 0)
         failed = result.get("tests_failed", 0)
-        status = "✅ PASS" if result.get("passed") else "❌ FAIL"
-        color = "#27AE60" if result.get("passed") else "#EB5757"
+        status = "PASS" if result.get("passed") else "FAIL"
+        color = "#C05621" if result.get("passed") else "#C53030"
         rows.append(f"""
         <tr>
           <td style="padding:5px;font-family:monospace;font-size:0.85em">{filepath}</td>
           <td style="padding:5px;color:{color};font-weight:bold">{status}</td>
-          <td style="padding:5px;color:#27AE60">{passed} passed</td>
-          <td style="padding:5px;color:#EB5757">{failed} failed</td>
+          <td style="padding:5px;color:#C05621">{passed} passed</td>
+          <td style="padding:5px;color:#C53030">{failed} failed</td>
         </tr>""")
     return f"""
     <table style="width:100%;border-collapse:collapse;font-size:0.9em">
-      <tr style="background:#0D1B2A;color:white">
+      <tr style="background:var(--header-bg);color:var(--header-fg)">
         <th style="padding:6px;text-align:left">Test File</th>
         <th style="padding:6px;text-align:left">Result</th>
         <th style="padding:6px;text-align:left">Passed</th>
@@ -132,13 +133,13 @@ def _render_tests(test_results: dict) -> str:
 
 def _render_security(findings: list) -> str:
     if not findings:
-        return '<span style="color:#27AE60;font-weight:bold">✅ No security findings.</span>'
+        return '<span style="color:#C05621;font-weight:bold">No security findings.</span>'
     rows = []
-    sev_colors = {"HIGH": "#EB5757", "MEDIUM": "#F2994A", "LOW": "#2D9CDB"}
+    sev_colors = {"HIGH": "#C53030", "MEDIUM": "#B7791F", "LOW": "#744210"}
     for f in findings:
         color = sev_colors.get(f.get("severity", "LOW"), "#718096")
-        fix_status = "✅ Fixed" if f.get("fix_applied") else "⚠️ Open"
-        fix_color = "#27AE60" if f.get("fix_applied") else "#F2994A"
+        fix_status = "Fixed" if f.get("fix_applied") else "Open"
+        fix_color = "#C05621" if f.get("fix_applied") else "#B7791F"
         rows.append(f"""
         <tr>
           <td style="padding:5px;font-family:monospace;font-size:0.85em">{f.get('file','')}</td>
@@ -148,7 +149,7 @@ def _render_security(findings: list) -> str:
         </tr>""")
     return f"""
     <table style="width:100%;border-collapse:collapse;font-size:0.9em">
-      <tr style="background:#0D1B2A;color:white">
+      <tr style="background:var(--header-bg);color:var(--header-fg)">
         <th style="padding:6px;text-align:left">File</th>
         <th style="padding:6px;text-align:left">Severity</th>
         <th style="padding:6px;text-align:left">Issue</th>
@@ -165,7 +166,7 @@ def _render_metrics(state: dict) -> str:
     phase = state.get("phase", "init")
     status = state.get("pipeline_status", "running")
 
-    status_color = "#27AE60" if status == "completed" else ("#EB5757" if status == "failed" else "#2D9CDB")
+    status_color = "#C05621" if status == "completed" else ("#C53030" if status == "failed" else "#B7791F")
 
     agent_rows = ""
     for agent, m in metrics.items():
@@ -173,39 +174,39 @@ def _render_metrics(state: dict) -> str:
             continue
         agent_rows += f"""
         <tr>
-          <td style="padding:4px;font-weight:bold;color:#1B4F8A">{agent}</td>
-          <td style="padding:4px">{m.get('latency_s', '—')}s</td>
-          <td style="padding:4px">{m.get('tokens', '—')}</td>
-          <td style="padding:4px">{m.get('confidence', '—')}{'%' if m.get('confidence') else ''}</td>
+          <td style="padding:4px;font-weight:bold;color:var(--accent-warm)">{agent}</td>
+          <td style="padding:4px">{m.get('latency_s', '&mdash;')}s</td>
+          <td style="padding:4px">{m.get('tokens', '&mdash;')}</td>
+          <td style="padding:4px">{m.get('confidence', '&mdash;')}{'%' if m.get('confidence') else ''}</td>
         </tr>"""
 
     return f"""
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px">
-      <div style="background:#EBF8FF;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:1.8em;font-weight:bold;color:#1B4F8A">{api_calls}</div>
-        <div style="color:#718096;font-size:0.85em">API Calls</div>
+      <div style="background:var(--card-bg);padding:12px;border-radius:8px;text-align:center;border:1px solid var(--card-border)">
+        <div style="font-size:1.8em;font-weight:bold;color:var(--accent-warm)">{api_calls}</div>
+        <div style="color:var(--text-muted);font-size:0.85em">API Calls</div>
       </div>
-      <div style="background:#EBF8FF;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:1.8em;font-weight:bold;color:#1B4F8A">{total_tokens:,}</div>
-        <div style="color:#718096;font-size:0.85em">Total Tokens</div>
+      <div style="background:var(--card-bg);padding:12px;border-radius:8px;text-align:center;border:1px solid var(--card-border)">
+        <div style="font-size:1.8em;font-weight:bold;color:var(--accent-warm)">{total_tokens:,}</div>
+        <div style="color:var(--text-muted);font-size:0.85em">Total Tokens</div>
       </div>
-      <div style="background:#EBF8FF;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:1.4em;font-weight:bold;color:#1B4F8A">{phase.replace('_',' ').title()}</div>
-        <div style="color:#718096;font-size:0.85em">Current Phase</div>
+      <div style="background:var(--card-bg);padding:12px;border-radius:8px;text-align:center;border:1px solid var(--card-border)">
+        <div style="font-size:1.4em;font-weight:bold;color:var(--accent-warm)">{phase.replace('_',' ').title()}</div>
+        <div style="color:var(--text-muted);font-size:0.85em">Current Phase</div>
       </div>
-      <div style="background:#EBF8FF;padding:12px;border-radius:8px;text-align:center">
+      <div style="background:var(--card-bg);padding:12px;border-radius:8px;text-align:center;border:1px solid var(--card-border)">
         <div style="font-size:1.4em;font-weight:bold;color:{status_color}">{status.upper()}</div>
-        <div style="color:#718096;font-size:0.85em">Status</div>
+        <div style="color:var(--text-muted);font-size:0.85em">Status</div>
       </div>
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:0.88em">
-      <tr style="background:#0D1B2A;color:white">
+      <tr style="background:var(--header-bg);color:var(--header-fg)">
         <th style="padding:5px;text-align:left">Agent</th>
         <th style="padding:5px;text-align:left">Latency</th>
         <th style="padding:5px;text-align:left">Tokens</th>
         <th style="padding:5px;text-align:left">Confidence</th>
       </tr>
-      {agent_rows or '<tr><td colspan="4" style="padding:8px;text-align:center;color:#718096">Pipeline not started</td></tr>'}
+      {agent_rows or '<tr><td colspan="4" style="padding:8px;text-align:center;color:var(--text-muted)">Pipeline not started</td></tr>'}
     </table>"""
 
 
@@ -257,35 +258,35 @@ def _render_preview(state: dict) -> str:
 
     stats_bar = f"""
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px">
-      <div style="background:linear-gradient(135deg,#0D1B2A,#1B4F8A);padding:14px;border-radius:10px;text-align:center;color:white">
+      <div style="background:linear-gradient(135deg,#7B341E,#C05621);padding:14px;border-radius:10px;text-align:center;color:white">
         <div style="font-size:1.8em;font-weight:700">{len(py_files)}</div>
-        <div style="font-size:0.75em;opacity:0.8;margin-top:2px">Python Files</div>
+        <div style="font-size:0.75em;opacity:0.85;margin-top:2px">Python Files</div>
       </div>
-      <div style="background:linear-gradient(135deg,#134E4A,#047857);padding:14px;border-radius:10px;text-align:center;color:white">
+      <div style="background:linear-gradient(135deg,#744210,#B7791F);padding:14px;border-radius:10px;text-align:center;color:white">
         <div style="font-size:1.8em;font-weight:700">{total_lines:,}</div>
-        <div style="font-size:0.75em;opacity:0.8;margin-top:2px">Lines of Code</div>
+        <div style="font-size:0.75em;opacity:0.85;margin-top:2px">Lines of Code</div>
       </div>
-      <div style="background:linear-gradient(135deg,#1E3A5F,#2D9CDB);padding:14px;border-radius:10px;text-align:center;color:white">
+      <div style="background:linear-gradient(135deg,#652B19,#9C4221);padding:14px;border-radius:10px;text-align:center;color:white">
         <div style="font-size:1.8em;font-weight:700">{len(endpoints)}</div>
-        <div style="font-size:0.75em;opacity:0.8;margin-top:2px">API Endpoints</div>
+        <div style="font-size:0.75em;opacity:0.85;margin-top:2px">API Endpoints</div>
       </div>
-      <div style="background:linear-gradient(135deg,#3D1A78,#7C3AED);padding:14px;border-radius:10px;text-align:center;color:white">
+      <div style="background:linear-gradient(135deg,#553C1A,#975A16);padding:14px;border-radius:10px;text-align:center;color:white">
         <div style="font-size:1.8em;font-weight:700">{tasks_done}/{tasks_total}</div>
-        <div style="font-size:0.75em;opacity:0.8;margin-top:2px">Tasks Done</div>
+        <div style="font-size:0.75em;opacity:0.85;margin-top:2px">Tasks Done</div>
       </div>
-      <div style="background:linear-gradient(135deg,#7A1D1D,#DC2626);padding:14px;border-radius:10px;text-align:center;color:white">
+      <div style="background:linear-gradient(135deg,#63171B,#C53030);padding:14px;border-radius:10px;text-align:center;color:white">
         <div style="font-size:1.8em;font-weight:700">{test_rate}%</div>
-        <div style="font-size:0.75em;opacity:0.8;margin-top:2px">Tests Passing</div>
+        <div style="font-size:0.75em;opacity:0.85;margin-top:2px">Tests Passing</div>
       </div>
     </div>"""
 
     # ── API Endpoint Explorer ─────────────────────────────────────────────────
     METHOD_STYLE = {
-        "GET":    ("background:#0369A1;color:white",   "#EFF6FF", "#BFDBFE"),
-        "POST":   ("background:#065F46;color:white",   "#F0FFF4", "#A7F3D0"),
-        "PUT":    ("background:#92400E;color:white",   "#FFFBEB", "#FDE68A"),
-        "PATCH":  ("background:#6B21A8;color:white",   "#FAF5FF", "#DDD6FE"),
-        "DELETE": ("background:#991B1B;color:white",   "#FFF5F5", "#FECACA"),
+        "GET":    ("background:#744210;color:#FFFBEB",   "#FFFBEB", "#F6AD55"),
+        "POST":   ("background:#276749;color:#F0FFF4",   "#F0FFF4", "#9AE6B4"),
+        "PUT":    ("background:#7B341E;color:#FFF5F0",   "#FFF5F0", "#FC8181"),
+        "PATCH":  ("background:#553C1A;color:#FFFFF0",   "#FFFFF0", "#F6E05E"),
+        "DELETE": ("background:#63171B;color:#FFF5F5",   "#FFF5F5", "#FEB2B2"),
     }
 
     endpoint_cards = ""
@@ -343,8 +344,8 @@ def _render_preview(state: dict) -> str:
           </div>
           <div style="background:#FAFAFA;border-top:1px solid {border_color}">
             <details style="margin:0">
-              <summary style="padding:8px 16px;cursor:pointer;color:#1B4F8A;font-size:0.8em;font-weight:600;user-select:none;list-style:none;display:flex;align-items:center;gap:6px">
-                <span>▶ See request &amp; response example</span>
+              <summary style="padding:8px 16px;cursor:pointer;color:var(--accent-warm);font-size:0.8em;font-weight:600;user-select:none;list-style:none;display:flex;align-items:center;gap:6px">
+                <span>See request &amp; response example</span>
                 <span style="background:#E0F2FE;color:#0369A1;padding:1px 7px;border-radius:8px;font-size:0.85em">{status_code}</span>
               </summary>
               <div style="padding:12px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;border-top:1px solid {border_color}">
@@ -368,22 +369,22 @@ def _render_preview(state: dict) -> str:
         </div>"""
 
     swagger_note = (
-        f'<span style="font-size:0.8em;color:#64748B;font-weight:400;margin-left:8px">'
-        f'· Interactive Swagger UI at '
+        f'<span style="font-size:0.8em;color:var(--text-muted);font-weight:400;margin-left:8px">'
+        f'&middot; Interactive Swagger UI at '
         f'<a href="http://localhost:8000/docs" target="_blank" '
-        f'style="color:#2D9CDB;text-decoration:none;font-family:monospace">'
+        f'style="color:var(--accent-warm);text-decoration:none;font-family:monospace">'
         f'http://localhost:8000/docs</a> when running</span>'
     ) if is_fastapi else ""
 
     endpoints_section = f"""
     <div style="margin-bottom:22px">
-      <div style="font-weight:700;color:#0D1B2A;font-size:1em;margin-bottom:10px;display:flex;align-items:center;gap:6px">
-        🔌 API Endpoints
-        <span style="background:#EBF8FF;color:#1B4F8A;font-size:0.75em;padding:2px 9px;border-radius:10px;font-weight:700">{len(endpoints)} routes</span>
+      <div style="font-weight:700;color:var(--text-primary);font-size:1em;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+        API Endpoints
+        <span style="background:var(--badge-bg);color:var(--accent-warm);font-size:0.75em;padding:2px 9px;border-radius:10px;font-weight:700">{len(endpoints)} routes</span>
         {swagger_note}
       </div>
       {endpoint_cards if endpoint_cards else
-       '<div style="padding:16px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;color:#92400E;font-size:0.85em">⚠ Could not extract endpoints from generated code. Check the router files manually.</div>'}
+       '<div style="padding:16px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;color:#92400E;font-size:0.85em">Could not extract endpoints from generated code. Check the router files manually.</div>'}
     </div>"""
 
     # ── Data Models ───────────────────────────────────────────────────────────
@@ -396,48 +397,49 @@ def _render_preview(state: dict) -> str:
         name   = m.get("name", "Model")
         fields = m.get("fields", [])
         rows   = "".join(
-            f'<tr style="border-top:1px solid #F1F5F9">'
-            f'<td style="padding:5px 10px;font-family:monospace;font-size:0.8em;color:#1B4F8A;font-weight:600">{f.get("name","")}</td>'
-            f'<td style="padding:5px 10px;font-size:0.8em;color:#7C3AED">{f.get("type","str")}</td>'
-            f'<td style="padding:5px 10px;font-size:0.78em;color:#64748B">'
+            f'<tr style="border-top:1px solid var(--card-border)">'
+            f'<td style="padding:5px 10px;font-family:monospace;font-size:0.8em;color:var(--accent-warm);font-weight:600">{f.get("name","")}</td>'
+            f'<td style="padding:5px 10px;font-size:0.8em;color:#744210">{f.get("type","str")}</td>'
+            f'<td style="padding:5px 10px;font-size:0.78em;color:var(--text-muted)">'
             f'{"required" if not f.get("optional") else "optional"}'
-            f'{"· PK" if f.get("name","") == "id" else ""}'
+            f'{"&middot; PK" if f.get("name","") == "id" else ""}'
             f'</td></tr>'
             for f in fields[:10]
         )
         model_cards += f"""
-        <div style="border:1px solid #E2E8F0;border-radius:9px;overflow:hidden;min-width:180px;flex:1">
-          <div style="background:#0D1B2A;color:white;padding:9px 13px;font-weight:700;font-size:0.85em;font-family:monospace;letter-spacing:0.03em">{name}</div>
+        <div style="border:1px solid var(--card-border);border-radius:9px;overflow:hidden;min-width:180px;flex:1">
+          <div style="background:var(--header-bg);color:var(--header-fg);padding:9px 13px;font-weight:700;font-size:0.85em;font-family:monospace;letter-spacing:0.03em">{name}</div>
           <table style="width:100%;border-collapse:collapse">
-            <tr style="background:#F8FAFC"><th style="padding:4px 10px;text-align:left;font-size:0.72em;color:#94A3B8;font-weight:700">FIELD</th><th style="padding:4px 10px;text-align:left;font-size:0.72em;color:#94A3B8;font-weight:700">TYPE</th><th style="padding:4px 10px;text-align:left;font-size:0.72em;color:#94A3B8;font-weight:700">INFO</th></tr>
-            {rows or '<tr><td colspan="3" style="padding:8px 10px;color:#94A3B8;font-size:0.8em">No fields parsed</td></tr>'}
+            <tr style="background:var(--surface)"><th style="padding:4px 10px;text-align:left;font-size:0.72em;color:var(--text-muted);font-weight:700">FIELD</th><th style="padding:4px 10px;text-align:left;font-size:0.72em;color:var(--text-muted);font-weight:700">TYPE</th><th style="padding:4px 10px;text-align:left;font-size:0.72em;color:var(--text-muted);font-weight:700">INFO</th></tr>
+            {rows or '<tr><td colspan="3" style="padding:8px 10px;color:var(--text-muted);font-size:0.8em">No fields parsed</td></tr>'}
           </table>
         </div>"""
 
     models_section = f"""
     <div style="margin-bottom:22px">
-      <div style="font-weight:700;color:#0D1B2A;font-size:1em;margin-bottom:10px">🗃️ Data Models</div>
+      <div style="font-weight:700;color:var(--text-primary);font-size:1em;margin-bottom:10px">Data Models</div>
       <div style="display:flex;flex-wrap:wrap;gap:10px">{model_cards}</div>
     </div>""" if model_cards else ""
 
     # ── File tree + Project-specific run instructions ─────────────────────────
-    role_icons = {
-        "main":       "🏠", "database": "🗄️", "model":    "📐",
-        "schema":     "📋", "router":   "🔀", "auth":     "🔐",
-        "security":   "🔐", "config":   "⚙️", "test":     "🧪",
-        "dockerfile": "🐳", "docker":   "🐳", "require":  "📦",
-        "crud":       "🔧", "deps":     "⛓️",
+    role_labels = {
+        "main":       "[main]", "database": "[db]", "model":    "[model]",
+        "schema":     "[schema]", "router":   "[router]", "auth":     "[auth]",
+        "security":   "[security]", "config":   "[config]", "test":     "[test]",
+        "dockerfile": "[docker]", "docker":   "[docker]", "require":  "[deps]",
+        "crud":       "[crud]", "deps":     "[deps]",
     }
     tree_rows = ""
     for f in py_files + cfg_files:
         lines = len((files[f] or "").splitlines())
         fname = Path(f).name.lower()
-        icon  = next((v for k, v in role_icons.items() if k in fname), "📄")
-        bg    = "#F7FAFC" if f.endswith(".py") else "#FFFBEB"
+        label  = next((v for k, v in role_labels.items() if k in fname), "[file]")
+        bg    = "var(--surface)" if f.endswith(".py") else "var(--surface-alt)"
         tree_rows += (
-            f'<tr style="background:{bg};border-bottom:1px solid #F1F5F9">'
-            f'<td style="padding:5px 10px;font-family:monospace;font-size:0.8em;color:#1A202C">{icon} {f}</td>'
-            f'<td style="padding:5px 10px;color:#94A3B8;font-size:0.78em;text-align:right">{lines} lines</td>'
+            f'<tr style="background:{bg};border-bottom:1px solid var(--card-border)">'
+            f'<td style="padding:5px 10px;font-family:monospace;font-size:0.8em;color:var(--text-primary)">'
+            f'<span style="color:var(--text-muted);font-size:0.78em;margin-right:6px">{label}</span>{f}</td>'
+            f'<td style="padding:5px 10px;color:var(--text-muted);font-size:0.78em;text-align:right">{lines} lines</td>'
             f'</tr>'
         )
 
@@ -468,40 +470,40 @@ def _render_preview(state: dict) -> str:
 
     run_html_lines = ""
     for comment, cmd in run_steps:
-        run_html_lines += f'<span style="color:#4ADE80;font-size:0.82em">{comment}</span>\n{cmd}\n\n'
+        run_html_lines += f'<span style="color:#F6AD55;font-size:0.82em">{comment}</span>\n{cmd}\n\n'
 
     pkgs = [l.strip().split(">=")[0].split("==")[0].split("[")[0]
             for l in req_file.splitlines()
             if l.strip() and not l.startswith("#")] if req_file else []
     pkg_chips = " ".join(
-        f'<span style="background:#EDF2F7;color:#1B4F8A;padding:2px 8px;border-radius:10px;font-size:0.76em;display:inline-block;margin:2px;border:1px solid #BEE3F8">{p}</span>'
+        f'<span style="background:var(--badge-bg);color:var(--accent-warm);padding:2px 8px;border-radius:10px;font-size:0.76em;display:inline-block;margin:2px;border:1px solid var(--card-border)">{p}</span>'
         for p in pkgs[:14]
     )
 
     file_run_section = f"""
     <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:20px">
       <div>
-        <div style="font-weight:700;color:#0D1B2A;margin-bottom:8px">📁 File Tree
-          <span style="font-size:0.75em;color:#94A3B8;font-weight:400;margin-left:6px">{len(py_files)} Python · {len(cfg_files)} config · {total_lines:,} lines</span>
+        <div style="font-weight:700;color:var(--text-primary);margin-bottom:8px">File Tree
+          <span style="font-size:0.75em;color:var(--text-muted);font-weight:400;margin-left:6px">{len(py_files)} Python &middot; {len(cfg_files)} config &middot; {total_lines:,} lines</span>
         </div>
-        <table style="width:100%;border-collapse:collapse;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;border:1px solid var(--card-border);border-radius:8px;overflow:hidden">
           {tree_rows}
         </table>
         <div style="margin-top:10px">{pkg_chips}</div>
       </div>
       <div>
-        <div style="font-weight:700;color:#0D1B2A;margin-bottom:8px">🚀 Run this project</div>
-        <div style="background:#0F172A;color:#E2E8F0;padding:14px 16px;border-radius:9px;font-family:monospace;font-size:0.8em;line-height:2;white-space:pre-wrap">{run_html_lines.rstrip()}</div>
+        <div style="font-weight:700;color:var(--text-primary);margin-bottom:8px">Run this project</div>
+        <div style="background:#1A0F00;color:#E2D9C9;padding:14px 16px;border-radius:9px;font-family:monospace;font-size:0.8em;line-height:2;white-space:pre-wrap">{run_html_lines.rstrip()}</div>
         <div style="margin-top:10px">
-          <div style="font-weight:700;color:#0D1B2A;font-size:0.85em;margin-bottom:5px">🐳 Or with Docker</div>
-          <div style="background:#0F172A;color:#E2E8F0;padding:10px 14px;border-radius:9px;font-family:monospace;font-size:0.8em;line-height:2">
-            <span style="color:#4ADE80;font-size:0.82em"># Builds &amp; starts all services</span>
+          <div style="font-weight:700;color:var(--text-primary);font-size:0.85em;margin-bottom:5px">Or with Docker</div>
+          <div style="background:#1A0F00;color:#E2D9C9;padding:10px 14px;border-radius:9px;font-family:monospace;font-size:0.8em;line-height:2">
+            <span style="color:#F6AD55;font-size:0.82em"># Builds &amp; starts all services</span>
             docker compose up --build
-            <span style="color:#4ADE80;font-size:0.82em"># API at http://localhost:{port}</span>
+            <span style="color:#F6AD55;font-size:0.82em"># API at http://localhost:{port}</span>
           </div>
         </div>
         <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px">
-          {"".join(f'<span style="background:#EBF8FF;color:#1B4F8A;padding:3px 10px;border-radius:12px;font-size:0.76em;border:1px solid #BEE3F8">{k}: {v}</span>' for k, v in stack.items())}
+          {"".join(f'<span style="background:var(--badge-bg);color:var(--accent-warm);padding:3px 10px;border-radius:12px;font-size:0.76em;border:1px solid var(--card-border)">{k}: {v}</span>' for k, v in stack.items())}
         </div>
       </div>
     </div>"""
@@ -781,29 +783,29 @@ def _render_summary(summary: dict) -> str:
         return "<i>Pipeline not complete yet.</i>"
     return f"""
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-      <div style="background:#F0FFF4;padding:10px;border-radius:8px;text-align:center;border:1px solid #27AE60">
-        <div style="font-size:2em;font-weight:bold;color:#27AE60">{summary.get('tasks_completed',0)}/{summary.get('tasks_total',0)}</div>
-        <div style="color:#718096">Tasks Completed</div>
+      <div style="background:var(--card-bg);padding:10px;border-radius:8px;text-align:center;border:1px solid var(--card-border)">
+        <div style="font-size:2em;font-weight:bold;color:#C05621">{summary.get('tasks_completed',0)}/{summary.get('tasks_total',0)}</div>
+        <div style="color:var(--text-muted)">Tasks Completed</div>
       </div>
-      <div style="background:#EBF8FF;padding:10px;border-radius:8px;text-align:center;border:1px solid #2D9CDB">
-        <div style="font-size:2em;font-weight:bold;color:#2D9CDB">{summary.get('files_generated',0)}</div>
-        <div style="color:#718096">Files Generated</div>
+      <div style="background:var(--card-bg);padding:10px;border-radius:8px;text-align:center;border:1px solid var(--card-border)">
+        <div style="font-size:2em;font-weight:bold;color:#B7791F">{summary.get('files_generated',0)}</div>
+        <div style="color:var(--text-muted)">Files Generated</div>
       </div>
-      <div style="background:#F0FFF4;padding:10px;border-radius:8px;text-align:center;border:1px solid #27AE60">
-        <div style="font-size:2em;font-weight:bold;color:#27AE60">{summary.get('test_pass_rate',0)}%</div>
-        <div style="color:#718096">Test Pass Rate</div>
+      <div style="background:var(--card-bg);padding:10px;border-radius:8px;text-align:center;border:1px solid var(--card-border)">
+        <div style="font-size:2em;font-weight:bold;color:#C05621">{summary.get('test_pass_rate',0)}%</div>
+        <div style="color:var(--text-muted)">Test Pass Rate</div>
       </div>
-      <div style="background:#FFF5F5;padding:10px;border-radius:8px;text-align:center;border:1px solid #EB5757">
-        <div style="font-size:2em;font-weight:bold;color:#EB5757">{summary.get('security_findings_total',0)}</div>
-        <div style="color:#718096">Security Findings</div>
+      <div style="background:var(--card-bg);padding:10px;border-radius:8px;text-align:center;border:1px solid var(--card-border)">
+        <div style="font-size:2em;font-weight:bold;color:#C53030">{summary.get('security_findings_total',0)}</div>
+        <div style="color:var(--text-muted)">Security Findings</div>
       </div>
-      <div style="background:#F0FFF4;padding:10px;border-radius:8px;text-align:center;border:1px solid #27AE60">
-        <div style="font-size:2em;font-weight:bold;color:#27AE60">{summary.get('security_findings_fixed',0)}</div>
-        <div style="color:#718096">Findings Fixed</div>
+      <div style="background:var(--card-bg);padding:10px;border-radius:8px;text-align:center;border:1px solid var(--card-border)">
+        <div style="font-size:2em;font-weight:bold;color:#C05621">{summary.get('security_findings_fixed',0)}</div>
+        <div style="color:var(--text-muted)">Findings Fixed</div>
       </div>
-      <div style="background:#EBF8FF;padding:10px;border-radius:8px;text-align:center;border:1px solid #2D9CDB">
-        <div style="font-size:2em;font-weight:bold;color:#1B4F8A">{summary.get('api_calls_total',0)}</div>
-        <div style="color:#718096">API Calls Total</div>
+      <div style="background:var(--card-bg);padding:10px;border-radius:8px;text-align:center;border:1px solid var(--card-border)">
+        <div style="font-size:2em;font-weight:bold;color:#B7791F">{summary.get('api_calls_total',0)}</div>
+        <div style="color:var(--text-muted)">API Calls Total</div>
       </div>
     </div>"""
 
@@ -816,23 +818,273 @@ def create_dashboard():
     with gr.Blocks(
         title="Forge — Engineering Intelligence System",
         theme=gr.themes.Base(
-            primary_hue="blue",
-            secondary_hue="orange",
-            font=gr.themes.GoogleFont("Inter"),
+            primary_hue="orange",
+            secondary_hue="red",
+            font=gr.themes.GoogleFont("Lora"),
         ),
         css="""
-        .forge-header { background: #0D1B2A; padding: 20px; border-radius: 8px; margin-bottom: 16px; }
-        .forge-header h1 { color: #2D9CDB; margin: 0; font-size: 2em; }
-        .forge-header p { color: #A0AEC0; margin: 4px 0 0 0; }
-        .section-label { color: #0D1B2A; font-weight: bold; font-size: 1.05em; margin-bottom: 4px; }
+        /* ── Google Fonts ── */
+        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&display=swap');
+
+        /* ── CSS Variables: Light Mode ── */
+        :root {
+          --bg:            #FAF7F2;
+          --surface:       #F5F0E8;
+          --surface-alt:   #EDE8DC;
+          --card-bg:       #FDF9F4;
+          --card-border:   #D9C9B0;
+          --header-bg:     #3D2B1F;
+          --header-fg:     #F5ECD7;
+          --text-primary:  #2C1810;
+          --text-secondary:#5C4033;
+          --text-muted:    #8B6E5A;
+          --accent-warm:   #B5451B;
+          --accent-gold:   #9A6C00;
+          --badge-bg:      #F5E6D3;
+          --divider:       #D9C9B0;
+          --input-bg:      #FFFFFF;
+          --tab-active:    #B5451B;
+        }
+
+        /* ── Dark Mode ── */
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --bg:            #1C1008;
+            --surface:       #261508;
+            --surface-alt:   #2E1C0E;
+            --card-bg:       #221208;
+            --card-border:   #5C3A20;
+            --header-bg:     #0E0804;
+            --header-fg:     #F5ECD7;
+            --text-primary:  #F0E4D0;
+            --text-secondary:#C9A882;
+            --text-muted:    #9C7A5A;
+            --accent-warm:   #E07040;
+            --accent-gold:   #D4A830;
+            --badge-bg:      #3D2010;
+            --divider:       #5C3A20;
+            --input-bg:      #2C1A08;
+            --tab-active:    #E07040;
+          }
+        }
+
+        /* ── Global ── */
+        body, .gradio-container {
+          background-color: var(--bg) !important;
+          font-family: 'Lora', 'Times New Roman', Georgia, serif !important;
+          color: var(--text-primary) !important;
+        }
+
+        /* ── Header ── */
+        .forge-header {
+          background: linear-gradient(135deg, #3D2B1F 0%, #6B3A20 100%);
+          padding: 28px 32px;
+          border-radius: 10px;
+          margin-bottom: 20px;
+          border: 1px solid #8B5A30;
+          position: relative;
+          overflow: hidden;
+        }
+        .forge-header::before {
+          content: '';
+          position: absolute;
+          top: 0; right: 0; bottom: 0; left: 0;
+          background: repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 40px,
+            rgba(255,255,255,0.015) 40px,
+            rgba(255,255,255,0.015) 80px
+          );
+        }
+        .forge-header h1 {
+          color: #F5ECD7;
+          margin: 0 0 6px 0;
+          font-size: 2.2em;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          font-style: italic;
+        }
+        .forge-header p {
+          color: #C9A882;
+          margin: 0;
+          font-size: 0.95em;
+          font-weight: 400;
+          letter-spacing: 0.02em;
+        }
+        .forge-header .mode-toggle {
+          position: absolute;
+          top: 18px; right: 20px;
+        }
+
+        /* ── Theme Toggle Button ── */
+        #theme-toggle {
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.25);
+          color: #F5ECD7;
+          padding: 6px 14px;
+          border-radius: 20px;
+          font-family: 'Lora', serif;
+          font-size: 0.8em;
+          cursor: pointer;
+          transition: background 0.2s;
+          letter-spacing: 0.03em;
+        }
+        #theme-toggle:hover { background: rgba(255,255,255,0.2); }
+
+        /* ── Inputs ── */
+        .gr-textbox textarea, .gr-textbox input {
+          background: var(--input-bg) !important;
+          border: 1px solid var(--card-border) !important;
+          color: var(--text-primary) !important;
+          font-family: 'Lora', serif !important;
+          border-radius: 8px !important;
+        }
+        label.svelte-1b6s6s, .label-wrap span {
+          color: var(--text-secondary) !important;
+          font-family: 'Lora', serif !important;
+          font-weight: 600 !important;
+          font-size: 0.88em !important;
+          letter-spacing: 0.03em !important;
+        }
+
+        /* ── Buttons ── */
+        .gr-button-primary {
+          background: linear-gradient(135deg, #B5451B, #8B3210) !important;
+          border: none !important;
+          color: #FAF7F2 !important;
+          font-family: 'Lora', serif !important;
+          font-weight: 600 !important;
+          letter-spacing: 0.04em !important;
+          border-radius: 8px !important;
+          transition: all 0.2s !important;
+        }
+        .gr-button-primary:hover {
+          background: linear-gradient(135deg, #C9521F, #9C3A15) !important;
+          transform: translateY(-1px) !important;
+          box-shadow: 0 4px 12px rgba(181,69,27,0.35) !important;
+        }
+        .gr-button-secondary {
+          background: var(--surface) !important;
+          border: 1px solid var(--card-border) !important;
+          color: var(--text-primary) !important;
+          font-family: 'Lora', serif !important;
+          border-radius: 8px !important;
+        }
+        .gr-button-stop {
+          background: var(--surface-alt) !important;
+          border: 1px solid #C53030 !important;
+          color: #C53030 !important;
+          font-family: 'Lora', serif !important;
+          border-radius: 8px !important;
+        }
+
+        /* ── Tabs ── */
+        .tabs > .tab-nav button {
+          font-family: 'Lora', serif !important;
+          font-size: 0.88em !important;
+          font-weight: 600 !important;
+          color: var(--text-muted) !important;
+          letter-spacing: 0.02em !important;
+          border-radius: 6px 6px 0 0 !important;
+          padding: 10px 18px !important;
+        }
+        .tabs > .tab-nav button.selected {
+          color: var(--tab-active) !important;
+          border-bottom: 2px solid var(--tab-active) !important;
+          background: var(--bg) !important;
+        }
+
+        /* ── Accordion ── */
+        .gr-accordion > .label-wrap {
+          background: var(--surface) !important;
+          border: 1px solid var(--card-border) !important;
+          border-radius: 8px !important;
+          padding: 10px 16px !important;
+          color: var(--text-secondary) !important;
+          font-family: 'Lora', serif !important;
+          font-weight: 600 !important;
+          letter-spacing: 0.03em !important;
+        }
+
+        /* ── HTML panels ── */
+        .gr-html {
+          font-family: 'Lora', 'Times New Roman', Georgia, serif !important;
+          color: var(--text-primary) !important;
+        }
+
+        /* ── Sliders ── */
+        input[type=range]::-webkit-slider-thumb { background: var(--accent-warm) !important; }
+        input[type=range]::-webkit-slider-runnable-track { background: var(--card-border) !important; }
+
+        /* ── Dividers ── */
+        hr { border-color: var(--divider) !important; margin: 16px 0 !important; }
+
+        /* ── Table base ── */
+        table { font-family: 'Lora', serif !important; }
+        code, pre, .gr-code, .gr-textbox.monospace textarea {
+          font-family: 'Source Code Pro', 'Courier New', monospace !important;
+        }
+
+        /* ── Section labels ── */
+        .section-label {
+          color: var(--text-primary);
+          font-weight: 700;
+          font-size: 1.05em;
+          margin-bottom: 4px;
+          font-style: italic;
+        }
         """,
     ) as demo:
 
         # Header
         gr.HTML("""
         <div class="forge-header">
-          <h1>⚙️ FORGE</h1>
-          <p>Engineering Intelligence System — Agentic AI Framework</p>
+          <h1>Forge</h1>
+          <p>Engineering Intelligence System &mdash; Agentic AI Framework</p>
+          <div class="mode-toggle">
+            <button id="theme-toggle" onclick="
+              const root = document.documentElement;
+              const isDark = root.style.getPropertyValue('--bg') === '#1C1008';
+              if (isDark) {
+                root.style.setProperty('--bg','#FAF7F2');
+                root.style.setProperty('--surface','#F5F0E8');
+                root.style.setProperty('--surface-alt','#EDE8DC');
+                root.style.setProperty('--card-bg','#FDF9F4');
+                root.style.setProperty('--card-border','#D9C9B0');
+                root.style.setProperty('--header-bg','#3D2B1F');
+                root.style.setProperty('--header-fg','#F5ECD7');
+                root.style.setProperty('--text-primary','#2C1810');
+                root.style.setProperty('--text-secondary','#5C4033');
+                root.style.setProperty('--text-muted','#8B6E5A');
+                root.style.setProperty('--accent-warm','#B5451B');
+                root.style.setProperty('--accent-gold','#9A6C00');
+                root.style.setProperty('--badge-bg','#F5E6D3');
+                root.style.setProperty('--divider','#D9C9B0');
+                root.style.setProperty('--input-bg','#FFFFFF');
+                root.style.setProperty('--tab-active','#B5451B');
+                this.textContent = 'Dark Mode';
+              } else {
+                root.style.setProperty('--bg','#1C1008');
+                root.style.setProperty('--surface','#261508');
+                root.style.setProperty('--surface-alt','#2E1C0E');
+                root.style.setProperty('--card-bg','#221208');
+                root.style.setProperty('--card-border','#5C3A20');
+                root.style.setProperty('--header-bg','#0E0804');
+                root.style.setProperty('--header-fg','#F5ECD7');
+                root.style.setProperty('--text-primary','#F0E4D0');
+                root.style.setProperty('--text-secondary','#C9A882');
+                root.style.setProperty('--text-muted','#9C7A5A');
+                root.style.setProperty('--accent-warm','#E07040');
+                root.style.setProperty('--accent-gold','#D4A830');
+                root.style.setProperty('--badge-bg','#3D2010');
+                root.style.setProperty('--divider','#5C3A20');
+                root.style.setProperty('--input-bg','#2C1A08');
+                root.style.setProperty('--tab-active','#E07040');
+                this.textContent = 'Light Mode';
+              }
+            ">Dark Mode</button>
+          </div>
         </div>""")
 
         with gr.Row():
@@ -844,17 +1096,17 @@ def create_dashboard():
             )
             with gr.Column(scale=1):
                 run_btn = gr.Button(
-                    "🚀 Run Forge", variant="primary", size="lg",
+                    "Run Forge", variant="primary", size="lg",
                     interactive=False,   # disabled until prompt is entered
                 )
                 stop_btn = gr.Button(
-                    "⏹ Stop", variant="stop", size="sm",
+                    "Stop", variant="stop", size="sm",
                     interactive=False,   # disabled until pipeline is running
                 )
-                status_badge = gr.HTML('<span style="color:#718096">Ready — enter a prompt to begin</span>')
+                status_badge = gr.HTML('<span style="color:var(--text-muted)">Ready &mdash; enter a prompt to begin</span>')
 
         # Priority weights
-        with gr.Accordion("⚙️ Priority Weights (optional)", open=False):
+        with gr.Accordion("Priority Weights (optional)", open=False):
             with gr.Row():
                 w_speed    = gr.Slider(0, 1, value=0.2,  step=0.05, label="Generation Speed")
                 w_quality  = gr.Slider(0, 1, value=0.25, step=0.05, label="Code Quality")
@@ -867,31 +1119,31 @@ def create_dashboard():
         # Tabs
         with gr.Tabs():
 
-            with gr.TabItem("📊 Live Metrics"):
+            with gr.TabItem("Live Metrics"):
                 metrics_html = gr.HTML("<i>Start the pipeline to see metrics.</i>")
 
-            with gr.TabItem("🧠 Decision Audit Trail"):
-                gr.HTML('<p style="color:#718096;font-size:0.9em">Every architectural decision — what was considered, why it was chosen, confidence score.</p>')
+            with gr.TabItem("Decision Audit Trail"):
+                gr.HTML('<p style="color:var(--text-muted);font-size:0.9em">Every architectural decision &mdash; what was considered, why it was chosen, confidence score.</p>')
                 decisions_html = gr.HTML("<i>No decisions yet.</i>")
 
-            with gr.TabItem("📋 Task Plan"):
+            with gr.TabItem("Task Plan"):
                 tasks_html = gr.HTML("<i>Task plan not generated yet.</i>")
 
-            with gr.TabItem("🧪 Test Results"):
+            with gr.TabItem("Test Results"):
                 tests_html = gr.HTML("<i>No tests run yet.</i>")
 
-            with gr.TabItem("🔐 Security"):
+            with gr.TabItem("Security"):
                 security_html = gr.HTML("<i>Security audit not run yet.</i>")
 
-            with gr.TabItem("🏗️ Architecture"):
+            with gr.TabItem("Architecture"):
                 arch_html = gr.HTML("<i>Architecture not generated yet.</i>")
 
-            with gr.TabItem("📁 Files & Editor"):
+            with gr.TabItem("Files & Editor"):
                 with gr.Row():
                     file_selector = gr.Dropdown(
                         label="Select file", choices=[], interactive=True, scale=3
                     )
-                    download_btn = gr.Button("⬇ Download ZIP", size="sm", scale=1)
+                    download_btn = gr.Button("Download ZIP", size="sm", scale=1)
                 file_content = gr.Textbox(
                     label="File content (editable — select a file above)",
                     lines=25,
@@ -899,11 +1151,11 @@ def create_dashboard():
                     interactive=True,
                 )
                 with gr.Row():
-                    save_btn   = gr.Button("💾 Save changes", variant="primary", size="sm",
+                    save_btn   = gr.Button("Save changes", variant="primary", size="sm",
                                            interactive=False)
                     save_status = gr.HTML("")
                 gr.HTML('<hr style="margin:8px 0">')
-                gr.HTML('<div style="font-weight:bold;color:#0D1B2A;margin-bottom:4px">✏️ AI Edit — describe a change to apply to the selected file</div>')
+                gr.HTML('<div style="font-weight:bold;color:var(--text-primary);margin-bottom:4px;font-style:italic">AI Edit &mdash; describe a change to apply to the selected file</div>')
                 with gr.Row():
                     edit_prompt = gr.Textbox(
                         placeholder='e.g. "Add a /expenses/summary endpoint that returns total by category"',
@@ -913,17 +1165,17 @@ def create_dashboard():
                 ai_edit_status = gr.HTML("")
                 download_file  = gr.File(label="Download", visible=False)
 
-            with gr.TabItem("🚀 Project Preview"):
+            with gr.TabItem("Project Preview"):
                 preview_html = gr.HTML("<i>Run the pipeline to see the project preview.</i>")
 
-            with gr.TabItem("✅ Summary"):
+            with gr.TabItem("Summary"):
                 summary_html = gr.HTML("<i>Pipeline not complete.</i>")
 
         # Error banner — shown on crash, hidden otherwise
         error_banner = gr.HTML("", visible=False)
 
         # Activity log
-        with gr.Accordion("📜 Activity Log", open=False):
+        with gr.Accordion("Activity Log", open=False):
             activity_log = gr.Textbox(
                 label="",
                 lines=12,
@@ -946,7 +1198,7 @@ def create_dashboard():
             _pipeline_done = True
             log_action("Dashboard", "Stop requested by user")
             return (
-                '<span style="color:#F2994A;font-weight:bold">⏹ Stopped by user</span>',
+                '<span style="color:#B7791F;font-weight:bold">Stopped by user</span>',
                 gr.update(interactive=True),   # run_btn
                 gr.update(interactive=False),  # stop_btn
             )
@@ -962,7 +1214,7 @@ def create_dashboard():
 
             if not prompt.strip():
                 yield (
-                    '<span style="color:#EB5757">⚠️ Please enter a project specification.</span>',
+                    '<span style="color:#C53030">Please enter a project specification.</span>',
                     gr.update(interactive=True),   # run_btn
                     gr.update(interactive=False),  # stop_btn
                     gr.update(visible=False),      # error_banner
@@ -1046,15 +1298,15 @@ def create_dashboard():
 
                 # ── Status badge ──────────────────────────────────────────────
                 if status == "completed":
-                    status_html = '<span style="color:#27AE60;font-weight:bold">✅ Completed</span>'
+                    status_html = '<span style="color:#C05621;font-weight:bold">Completed</span>'
                 elif status == "failed":
-                    status_html = '<span style="color:#EB5757;font-weight:bold">❌ Failed</span>'
+                    status_html = '<span style="color:#C53030;font-weight:bold">Failed</span>'
                 elif not _pipeline_running and done:
-                    status_html = '<span style="color:#F2994A;font-weight:bold">⏹ Stopped</span>'
+                    status_html = '<span style="color:#B7791F;font-weight:bold">Stopped</span>'
                 else:
                     status_html = (
-                        f'<span style="color:#2D9CDB;font-weight:bold">'
-                        f'⚙️ {phase.replace("_", " ").title()}'
+                        f'<span style="color:#B7791F;font-weight:bold">'
+                        f'{phase.replace("_", " ").title()}'
                         f'</span>'
                     )
 
@@ -1064,24 +1316,24 @@ def create_dashboard():
                     trace_lines = (state.get("crash_traceback", "").strip().split("\n"))
                     trace_display = "\n".join(trace_lines[-6:])
                     err_html = f"""
-                    <div style="background:#FFF5F5;border:2px solid #EB5757;border-radius:8px;
+                    <div style="background:#FFF5F0;border:2px solid #C53030;border-radius:8px;
                                 padding:16px;margin:8px 0;">
-                      <div style="font-size:1.1em;font-weight:bold;color:#EB5757;margin-bottom:8px;">
-                        ❌ Pipeline crashed
+                      <div style="font-size:1.1em;font-weight:bold;color:#C53030;margin-bottom:8px;font-style:italic;">
+                        Pipeline crashed
                       </div>
                       <div style="color:#C53030;font-weight:bold;margin-bottom:8px;">{friendly}</div>
                       <details>
-                        <summary style="cursor:pointer;color:#718096;font-size:0.9em;">
+                        <summary style="cursor:pointer;color:var(--text-muted);font-size:0.9em;">
                           Show technical details
                         </summary>
-                        <pre style="background:#1A202C;color:#FC8181;padding:10px;border-radius:4px;
+                        <pre style="background:#1A0F00;color:#FC8181;padding:10px;border-radius:4px;
                                     font-size:0.8em;overflow-x:auto;margin-top:8px;">{trace_display}</pre>
-                        <div style="color:#718096;font-size:0.85em;margin-top:4px;">
+                        <div style="color:var(--text-muted);font-size:0.85em;margin-top:4px;">
                           Full error: {str(crash)[:300]}
                         </div>
                       </details>
-                      <div style="margin-top:12px;font-size:0.9em;color:#4A5568;">
-                        💡 <b>What to try:</b> Check the Activity Log for the last successful step.
+                      <div style="margin-top:12px;font-size:0.9em;color:var(--text-secondary);">
+                        <b>What to try:</b> Check the Activity Log for the last successful step.
                         Any files generated so far are still in the Generated Files tab.
                       </div>
                     </div>"""
@@ -1156,7 +1408,7 @@ def create_dashboard():
 
         def save_file(filename, new_content):
             if not filename:
-                return gr.update(interactive=True), '<span style="color:#EB5757">⚠ No file selected</span>'
+                return gr.update(interactive=True), '<span style="color:#C53030">No file selected</span>'
             state = get_state()
             state.setdefault("generated_files", {})[filename] = new_content
             set_state(state)
@@ -1165,16 +1417,16 @@ def create_dashboard():
             try:
                 out.parent.mkdir(parents=True, exist_ok=True)
                 out.write_text(new_content)
-                return gr.update(interactive=True), f'<span style="color:#27AE60">✅ Saved {filename}</span>'
+                return gr.update(interactive=True), f'<span style="color:#C05621">Saved {filename}</span>'
             except Exception as e:
-                return gr.update(interactive=True), f'<span style="color:#EB5757">Save error: {e}</span>'
+                return gr.update(interactive=True), f'<span style="color:#C53030">Save error: {e}</span>'
 
         def ai_edit_file(filename, current_content, change_prompt):
             """Apply a natural-language edit to the selected file using the LLM."""
             if not filename:
-                return current_content, '<span style="color:#EB5757">⚠ No file selected</span>'
+                return current_content, '<span style="color:#C53030">No file selected</span>'
             if not change_prompt.strip():
-                return current_content, '<span style="color:#EB5757">⚠ Describe the change to make</span>'
+                return current_content, '<span style="color:#C53030">Describe the change to make</span>'
             try:
                 from core.llm import get_client
                 client = get_client()
@@ -1212,9 +1464,9 @@ def create_dashboard():
                 state = get_state()
                 state.setdefault("generated_files", {})[filename] = new_code
                 set_state(state)
-                return new_code, f'<span style="color:#27AE60">✅ Applied: {change_prompt[:60]}</span>'
+                return new_code, f'<span style="color:#C05621">Applied: {change_prompt[:60]}</span>'
             except Exception as e:
-                return current_content, f'<span style="color:#EB5757">Error: {e}</span>'
+                return current_content, f'<span style="color:#C53030">Error: {e}</span>'
 
         def download_zip():
             zip_path = _make_zip()
@@ -1247,24 +1499,24 @@ def create_dashboard():
             """Return a human-friendly explanation of a crash cause."""
             e = err.lower()
             if "rate_limit" in e or "429" in e:
-                return ("🚦 Groq rate limit hit. The pipeline made too many API calls too quickly. "
+                return ("Rate limit hit. The pipeline made too many API calls too quickly. "
                         "Wait 60 seconds and try again, or reduce the number of tasks in your project.")
             if "token" in e and ("limit" in e or "exceed" in e or "context" in e):
-                return ("📏 Token limit exceeded. The project was too large for one run. "
+                return ("Token limit exceeded. The project was too large for one run. "
                         "Try a simpler project description, or break it into smaller scopes.")
             if "groq_api_key" in e or "api_key" in e or "authentication" in e:
-                return ("🔑 Groq API key missing or invalid. "
+                return ("Groq API key missing or invalid. "
                         "Make sure GROQ_API_KEY is set correctly in your environment.")
             if "connection" in e or "timeout" in e or "network" in e:
-                return ("🌐 Network error connecting to Groq API. "
+                return ("Network error connecting to Groq API. "
                         "Check your internet connection and try again.")
             if "json" in e and "parse" in e:
-                return ("🧩 The LLM returned malformed JSON. This sometimes happens with complex prompts. "
+                return ("The LLM returned malformed JSON. This sometimes happens with complex prompts. "
                         "Try running again — it usually succeeds on the second attempt.")
             if "filenotfounderror" in e or "no such file" in e:
-                return ("📂 A required file was not found. "
+                return ("A required file was not found. "
                         "Make sure the forge/ directory structure is intact.")
-            return ("⚠️ An unexpected error stopped the pipeline. "
+            return ("An unexpected error stopped the pipeline. "
                     "See the technical details below, and check the Activity Log for context.")
 
         run_btn.click(

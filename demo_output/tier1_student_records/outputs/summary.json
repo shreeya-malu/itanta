@@ -1,0 +1,76 @@
+{
+  "prompt": "Build a Python REST API for managing student records with authentication and database storage",
+  "complexity_tier": 1,
+  "tier_name": "The Ledger",
+  "stack": {
+    "framework": "FastAPI",
+    "database": "SQLite",
+    "auth": "JWT",
+    "orm": "SQLAlchemy 2.x",
+    "validation": "Pydantic v2"
+  },
+  "tasks_total": 7,
+  "tasks_completed": 7,
+  "tasks_failed": 0,
+  "generated_files_count": 11,
+  "test_files_count": 5,
+  "test_pass_rate": 100,
+  "api_calls": 18,
+  "total_tokens": 24310,
+  "security_findings": 0,
+  "security_fixes_applied": 0,
+  "docker_validated": true,
+  "pipeline_duration_s": 142.4,
+  "agent_metrics": {
+    "RequirementAgent": { "latency_s": 4.2, "tokens": 890, "confidence": 88 },
+    "PlanningAgent": { "latency_s": 6.7, "tokens": 2140, "confidence": 92 },
+    "ArchitectureValidatorAgent": { "latency_s": 3.1, "tokens": 680, "confidence": 90 },
+    "QAAgent": { "latency_s": 22.4, "tokens": 5820, "test_files_generated": 5 },
+    "CodeGenAgent": { "latency_s": 78.3, "tokens": 12400, "files_generated": 11 },
+    "DebugAgent": { "latency_s": 8.1, "tokens": 1680, "fixes_applied": 2 },
+    "SecurityAuditAgent": { "latency_s": 3.8, "tokens": 420, "findings": 0 },
+    "DockerAgent": { "latency_s": 0.3, "tokens": 0, "validated": true }
+  },
+  "decision_audit": [
+    {
+      "agent": "RequirementAgent",
+      "confidence": 88,
+      "reasoning": "Standard CRUD with JWT auth — well-defined scope, minimal ambiguity",
+      "alternatives": ["PostgreSQL considered — SQLite sufficient for single-instance", "bcrypt vs argon2 — bcrypt chosen for simplicity"],
+      "outcome": "approved"
+    },
+    {
+      "agent": "PlanningAgent",
+      "confidence": 92,
+      "reasoning": "rest_crud pattern directly matches requirements, 7-task decomposition is granular enough to avoid multi-file conflicts",
+      "alternatives": ["Single-file approach rejected — untestable", "Django rejected — FastAPI preferred for Pydantic v2 integration"],
+      "outcome": "approved"
+    },
+    {
+      "agent": "ArchitectureValidatorAgent",
+      "confidence": 90,
+      "reasoning": "All acceptance criteria covered, SQLAlchemy 2.x + Pydantic v2 versions locked",
+      "alternatives": [],
+      "outcome": "approved"
+    }
+  ],
+  "output_files": [
+    "generated_project/app/main.py",
+    "generated_project/app/database.py",
+    "generated_project/app/models.py",
+    "generated_project/app/schemas.py",
+    "generated_project/app/auth.py",
+    "generated_project/app/routers/students.py",
+    "generated_project/app/deps.py",
+    "generated_project/requirements.txt",
+    "generated_project/.env.example",
+    "generated_project/Dockerfile",
+    "generated_project/docker-compose.yml",
+    "tests/conftest.py",
+    "tests/test_database.py",
+    "tests/test_models.py",
+    "tests/test_schemas.py",
+    "tests/test_students_router.py"
+  ],
+  "pipeline_status": "completed"
+}
