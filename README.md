@@ -11,7 +11,7 @@
 
 ▶ [Watch the full pipeline demo (Loom)]https://www.loom.com/share/554b6147fcf04fc9ba8b3bb1aca3f9c1
 
-The demo shows Forge accepting the prompt `"Build a REST API for managing student records with authentication and database storage"` and autonomously producing a working, tested, Dockerized FastAPI application in ~2.5 minutes.
+The demo shows Forge accepting the prompt `"Build OAuth2 + JWT authentication with RBAC. Roles: admin, editor, viewer. bcrypt passwords. RS256 JWT, 15-min expiry. Registration, login, refresh, logout. Admin role management."` and autonomously producing a working, tested, Dockerized FastAPI application in ~2.5 minutes.
 
 ---
 
