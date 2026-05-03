@@ -9,7 +9,7 @@
 
 ## Demo
 
-▶ [Watch the full pipeline demo (Loom)](https://your-loom-link-here) ← replace with your link
+▶ [Watch the full pipeline demo (Loom)]([https://your-loom-link-here](https://www.loom.com/share/554b6147fcf04fc9ba8b3bb1aca3f9c1) ← replace with your link
 
 The demo shows Forge accepting the prompt `"Build a REST API for managing student records with authentication and database storage"` and autonomously producing a working, tested, Dockerized FastAPI application in ~2.5 minutes.
 
